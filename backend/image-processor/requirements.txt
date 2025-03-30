@@ -1,0 +1,9 @@
+# Core dependencies
+functions-framework==3.5.0
+flask==2.3.3
+google-cloud-vision==3.7.3
+google-cloud-secretmanager>=2.0.0
+
+# Testing dependencies
+pytest==7.4.3
+pytest-mock==3.12.0
