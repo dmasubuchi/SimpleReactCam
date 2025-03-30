@@ -1,0 +1,39 @@
+steps:
+  # Deploy API Gateway
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'api-gateway'
+      - '--runtime=python39'
+      - '--trigger-http'
+      - '--allow-unauthenticated'
+      - '--source=../backend/api-gateway/deploy'
+      - '--entry-point=app'
+      - '--memory=256MB'
+  
+  # Deploy Image Processor
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'image-processor'
+      - '--runtime=python39'
+      - '--trigger-http'
+      - '--allow-unauthenticated'
+      - '--source=../backend/image-processor/deploy'
+      - '--entry-point=app'
+      - '--memory=256MB'
+  
+  # Deploy Message Generator
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'message-generator'
+      - '--runtime=python39'
+      - '--trigger-http'
+      - '--allow-unauthenticated'
+      - '--source=../backend/message-generator/deploy'
+      - '--entry-point=app'
+      - '--memory=256MB'
