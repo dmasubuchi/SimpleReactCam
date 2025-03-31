@@ -12,9 +12,8 @@ from typing import Dict, Any, List, Optional, Tuple, Union
 
 import functions_framework
 from flask import Request, jsonify
-from google.cloud import secretmanager
+import google.auth
 from google.cloud import aiplatform
-from google.cloud.aiplatform.gapic.schema import predict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -98,65 +97,37 @@ DEFAULT_ADVICE = """
 """
 
 
-def get_service_account_key() -> str:
+def get_credentials():
     """
-    Retrieve the service account key from Secret Manager.
+    Get default credentials for Google Cloud APIs.
     
     Returns:
-        str: The service account key as a string.
+        None: Uses default credentials from the environment.
         
     Raises:
-        Exception: If there's an error retrieving the service account key.
+        Exception: If there's an error getting credentials.
     """
     try:
-        logger.info("Retrieving service account key from Secret Manager")
-        
-        client = secretmanager.SecretManagerServiceClient()
-        
-        project_id = os.environ.get("PROJECT_ID", "")
-        if not project_id:
-            project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
-            
-        if not project_id:
-            raise ValueError("Project ID not found in environment variables")
-            
-        name = f"projects/{project_id}/secrets/{SECRET_NAME}/versions/latest"
-        
-        response = client.access_secret_version(request={"name": name})
-        
-        service_account_key = response.payload.data.decode("UTF-8")
-        logger.info("Successfully retrieved service account key")
-        
-        return service_account_key
+        logger.info("Using default credentials from environment")
+        return None
     except Exception as e:
-        logger.error(f"Error retrieving service account key: {str(e)}")
+        logger.error(f"Error getting credentials: {str(e)}")
         raise
 
 
-def initialize_vertex_ai(service_account_key: str) -> None:
+def initialize_vertex_ai() -> None:
     """
-    Initialize the Vertex AI client with the provided service account key.
+    Initialize the Vertex AI client with default credentials.
     
-    Args:
-        service_account_key: The service account key as a string.
-        
     Raises:
         Exception: If there's an error initializing the Vertex AI client.
     """
     try:
-        temp_key_path = "/tmp/service_account_key.json"
-        with open(temp_key_path, "w") as f:
-            f.write(service_account_key)
-        
-        aiplatform.init(credentials=temp_key_path)
-        
-        os.remove(temp_key_path)
+        aiplatform.init()
         
         logger.info("Successfully initialized Vertex AI client")
     except Exception as e:
         logger.error(f"Error initializing Vertex AI client: {str(e)}")
-        if os.path.exists("/tmp/service_account_key.json"):
-            os.remove("/tmp/service_account_key.json")
         raise
 
 
@@ -324,9 +295,9 @@ def generate_message(request: Request) -> Dict[str, Any]:
                    f"{len(analysis_result.get('objects', []))} objects, "
                    f"text length: {len(analysis_result.get('text', ''))}")
         
-        service_account_key = get_service_account_key()
+        get_credentials()
         
-        initialize_vertex_ai(service_account_key)
+        initialize_vertex_ai()
         
         prompt = construct_prompt(scenario, analysis_result)
         
